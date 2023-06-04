@@ -1,0 +1,16 @@
+[package]
+name = "Rusty_Win_Driver"
+authors = ["0xlay <0xlay.lab@gmail.com>"]
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+path = "src/lib.rs"
+crate-type = ["cdylib"]
+
+[profile.dev]
+panic = "abort"
+
+[build-dependencies]
+winreg = "0.50.0"
+failure = {version = "0.1.8", default-features = false, features = ["std"]}

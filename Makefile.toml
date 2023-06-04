@@ -1,0 +1,41 @@
+[env.development]
+TARGET_PATH = "target/x86_64-pc-windows-msvc/debug"
+
+[env.release]
+TARGET_PATH = "target/x86_64-pc-windows-msvc/release"
+BUILD_FLAGS = "--release"
+
+[tasks.build-driver]
+script = [
+    "cargo build %BUILD_FLAGS%"
+]
+
+[tasks.rename-driver]
+dependencies = ["build-driver"]
+ignore_errors = true
+script = [
+    "cd %TARGET_PATH%",
+    "rename Rusty_Win_Driver.dll Rusty_Win_Driver.sys",
+]
+
+[tasks.sign-driver]
+dependencies = ["build-driver", "rename-driver"]
+script = [
+    "\"%WIN_SDK_TOOLS%\\makecert.exe\" -r -pe -ss PrivateCertStore -n \"CN=DriverCertificate\" DriverCertificate.cer",
+    "\"%WIN_SDK_TOOLS%\\signtool.exe\" sign /fd sha256 /v /s PrivateCertStore /n \"DriverCertificate\" /t http://timestamp.digicert.com /a %TARGET_PATH%/Rusty_Win_Driver.sys",
+
+]
+
+[tasks.deploy]
+dependencies = ["sign-driver"]
+script = [
+    "mkdir bin",
+    "move DriverCertificate.cer bin\\DriverCertificate.cer",
+    "move %TARGET_PATH%\\Rusty_Win_Driver.sys bin\\Rusty_Win_Driver.sys"
+]
+
+[tasks.cleanup]
+script = [
+    "rmdir /s /q bin",
+    "cargo clean",
+]
